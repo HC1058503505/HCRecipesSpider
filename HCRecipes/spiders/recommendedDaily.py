@@ -25,7 +25,7 @@ class RecommendedDaily(scrapy.Spider):
 	 		cover_p_retur_a = cover_p_retu.find('a')
 	 		cover_p_retur_href = cover_p_retur_a['href']
 	 		yield Request(cover_p_retur_href, self.recipesDetail)
-	 		break
+	 		# break
 
 
 	def recipesDetail(self, response):
@@ -47,11 +47,33 @@ class RecommendedDaily(scrapy.Spider):
 		retew_div = recipe_info.find('div',class_='retew')
 		retew_div_table = retew_div.find('table',class_='retamr')
 		retew_div_table_trs = retew_div_table.find_all('tr')
-		for x in xrange(0,len(retew_div_table_trs)):
-			print x
+		
+		zfliao_table = []
+		zfliao_table_slices = self.sliceMtims(retew_div_table_trs)
+		print len(zfliao_table_slices)
+		for slcie in zfliao_table_slices:
+			pass
 
 
+	def sliceMtims(self,tbody_bs_tr):
+		mtim = ()
+		for tr in tbody_bs_tr:
+			if tr.get("class") != None:
+				tr_class = tr["class"]
+				if 'mtim' in tr_class:
+					index = tbody_bs_tr.index(tr)
+					mtim = mtim + (index,)
 
+		results = []		
+		for i in range(len(mtim)):
+			if i + 1 < len(mtim):
+				slice_tr = tbody_bs_tr[mtim[i] : mtim[i + 1]]
+			else:
+				slice_tr = tbody_bs_tr[mtim[i] : ] 
+
+			results.append(slice_tr)
+
+		return results
 
 
 
