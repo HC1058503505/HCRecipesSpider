@@ -11,6 +11,7 @@ import scrapy
 class HcrecipesItem(scrapy.Item):
     # define the fields for your item here like:
     # name = scrapy.Field()
+    recipe_id = scrapy.Field()
     recipe_title = scrapy.Field()
     recipe_cover = scrapy.Field()
     recipe_views = scrapy.Field()

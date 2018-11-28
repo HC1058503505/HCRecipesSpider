@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import re
 import urllib2
 import time
 import requests
@@ -10,6 +11,11 @@ from HCRecipes.items import HcrecipesItem
 class RecipesParse(object):
 
 	def recipesDetail(self, response):
+		# recipe id
+		pattern = re.compile(r'https://www.douguo.com/cookbook/(.*?).html',)
+		recipe_id = re.match(pattern,response.url).group(1)
+
+		# recipe detail
 		recipesDetail_bs = BeautifulSoup(response.text,'lxml')
 		recipe_info = recipesDetail_bs.find('div', class_='recinfo')
 		div_bokpic = recipe_info.find('div', class_='bokpic')
@@ -33,21 +39,6 @@ class RecipesParse(object):
 			hasvideo = True
 			div_video_a = div_bokpic_as[1]
 			div_video_a_href = div_video_a['href']
-			# if div_video_a['href'] != None:
-			# 	div_video_a_href = div_video_a['href']
-			# 	# video_html_response = requests.get(div_video_a_href)
-			# 	video_html_response = urllib2.open(div_video_href)
-			# 	# time.sleep(1)
-			# 	video_html_bs = BeautifulSoup(video_html_response.read(), 'lxml')
-			# 	video_html_bs_div_releft = video_html_bs.find('div',class_='releft')
-			# 	video_html_bs_div_recinfo = video_html_bs_div_releft.find('div', class_='recifno')
-			# 	video_html_bs_embed = video_html_bs_div_recinfo.find('embed')
-			# 	print video_html_bs_div_releft
-			# 	if video_html_bs_embed['src'] != None:
-			# 		div_video_href = video_html_bs_embed['src']
-			# 		print div_video_a_href
-			# 	else:
-			# 		print 'div_video_a_href'
 			
 		
 		# 标题
@@ -112,26 +103,28 @@ class RecipesParse(object):
 
 		if hasvideo:
 			tempRecipesItem = HcrecipesItem({
+				'recipe_id' : recipe_id,
 				'recipe_title' : recipe_title,
 				'recipe_cover' : div_bokpic_a_img_src,
 				'recipe_views' : falisc_scan,
 				'recipe_collection' : falisc_collection,
 				'recipe_materials' : zfliao_table,
 				'recipe_steps' : recipes_steps,
-				'recipe_hasvideo' : False, 
+				'recipe_hasvideo' : hasvideo, 
 				'recipe_videosrc' : ''
 			})
 
 			yield Request(div_video_a_href, self.parseVideo, meta=tempRecipesItem)
 		else:
 			yield HcrecipesItem({
+					'recipe_id' : recipe_id,
 					'recipe_title' : recipe_title,
 					'recipe_cover' : div_bokpic_a_img_src,
 					'recipe_views' : falisc_scan,
 					'recipe_collection' : falisc_collection,
 					'recipe_materials' : zfliao_table,
 					'recipe_steps' : recipes_steps,
-					'recipe_hasvideo' : False, 
+					'recipe_hasvideo' : hasvideo, 
 					'recipe_videosrc' : ''
 				})
 			
@@ -141,7 +134,6 @@ class RecipesParse(object):
 		video_html_bs_embed = video_html_bs.find('embed')
 		video_src = video_html_bs_embed['src']
 		recipesItem = response.meta
-		recipesItem['recipe_hasvideo'] = True
 		recipesItem['recipe_videosrc'] = video_src
 		yield recipesItem
 
