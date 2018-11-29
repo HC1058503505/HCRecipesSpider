@@ -84,39 +84,46 @@ class RecipesParse(object):
 		retew_div_steps = retew_div.find('div',class_='step')
 
 		retew_div_stepconts = retew_div_steps.find_all('div',class_='stepcont')
+		if retew_div_stepconts == None or len(retew_div_stepconts) == 0:
+			pass
+		else: 
+			for stepcont in retew_div_stepconts:
 
-		
-		for stepcont in retew_div_stepconts:
+				stepcont_pldc = stepcont.find('div',class_='pldc')
+				if stepcont_pldc == None:
+					stepcont_p = stepcont.find('p')
+					stepcont_p_text = stepcont_p.get_text(strip=True)
+					recipes_steps.append({
+							'step_img_href' : '',
+							'step_text' : stepcont_p_text
+						})
+				else:
+					stepcont_pldc_a = stepcont_pldc.find('a')
+					# 步骤图片href
+					stepcont_pldc_a_href = stepcont_pldc_a['href']
+					# 步骤文字介绍
+					stepcont_pldc_p = stepcont.find('p')
 
-			stepcont_pldc = stepcont.find('div',class_='pldc')
-			stepcont_pldc_a = stepcont_pldc.find('a')
-			# 步骤图片href
-			stepcont_pldc_a_href = stepcont_pldc_a['href']
-			# 步骤文字介绍
-			stepcont_pldc_p = stepcont.find('p')
+					stepcont_pldc_p_text = stepcont_pldc_p.get_text(strip=True)
+					recipes_steps.append({
+							'step_img_href' : stepcont_pldc_a_href,
+							'step_text' : stepcont_pldc_p_text
+						})
 
-			stepcont_pldc_p_text = stepcont_pldc_p.get_text(strip=True)
-			recipes_steps.append({
-					'step_img_href' : stepcont_pldc_a_href,
-					'step_text' : stepcont_pldc_p_text
-				})
-
-		if hasvideo:
-			tempRecipesItem = HcrecipesItem({
-				'recipe_id' : recipe_id,
-				'recipe_title' : recipe_title,
-				'recipe_cover' : div_bokpic_a_img_src,
-				'recipe_views' : falisc_scan,
-				'recipe_collection' : falisc_collection,
-				'recipe_materials' : zfliao_table,
-				'recipe_steps' : recipes_steps,
-				'recipe_hasvideo' : hasvideo, 
-				'recipe_videosrc' : ''
-			})
-
-			yield Request(div_video_a_href, self.parseVideo, meta=tempRecipesItem)
+		# 分类
+		reicpe_mortips = []
+		retew_div_mortips = retew_div.find('div',class_='mortips')
+		if retew_div_mortips == None:
+			pass
 		else:
-			yield HcrecipesItem({
+			retew_div_mortips_spans = retew_div_mortips.find_all('span')
+			for span in retew_div_mortips_spans:
+				span_a = span.find(a)
+				span_a_text = span_a.get_text(strip=True)
+				reicpe_mortips.append(span_a_text)
+
+		# 菜谱Item
+		recipe_model = HcrecipesItem({
 					'recipe_id' : recipe_id,
 					'recipe_title' : recipe_title,
 					'recipe_cover' : div_bokpic_a_img_src,
@@ -125,9 +132,14 @@ class RecipesParse(object):
 					'recipe_materials' : zfliao_table,
 					'recipe_steps' : recipes_steps,
 					'recipe_hasvideo' : hasvideo, 
-					'recipe_videosrc' : ''
+					'recipe_videosrc' : '',
+					'reicpe_mortips' : reicpe_mortips
 				})
-			
+		
+		if hasvideo:
+			yield Request(div_video_a_href, self.parseVideo, meta=recipe_model)
+		else:
+			yield recipe_model
 
 	def parseVideo(self, response):
 		video_html_bs = BeautifulSoup(response.text, 'lxml')

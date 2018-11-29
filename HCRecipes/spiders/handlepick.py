@@ -11,7 +11,7 @@ class HandlePick(scrapy.Spider):
 	name = "HandlePick"
 	allowed_domains = ['www.douguo.com']
 	bash_url = 'https://www.douguo.com'
-	start_urls = ["https://www.douguo.com/caipu"]
+	start_urls = [u"https://www.douguo.com/caipu/"]
 	
 	def parse(self, response):
 		douguo_bs = BeautifulSoup(response.text,'lxml')
@@ -23,7 +23,7 @@ class HandlePick(scrapy.Spider):
 		maxPage = int(max(spans_text))
 
 		for i in range(maxPage):
-			url = 'https://www.douguo.com/caipu/' + str(i * 30)
+			url = response.url + str(i * 30)
 			print url
 			yield Request(url, self.allPages)
 				
@@ -43,5 +43,9 @@ class HandlePick(scrapy.Spider):
 		span_text = span.get_text(strip=True)
 		if span_text in [u'上一页',u'下一页']:
 			span_text = ''
-
+		elif span_text == u'尾页':
+			span_a = span.a
+			span_a_href = span_a['href']
+			span_a_href_split = span_a_href.split('/')
+			span_text = str(int(span_a_href_split[-1]) / 30 + 1)
 		return span_text

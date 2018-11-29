@@ -9,15 +9,41 @@ import scrapy
 
 
 class HcrecipesItem(scrapy.Item):
-    # define the fields for your item here like:
-    # name = scrapy.Field()
-    recipe_id = scrapy.Field()
-    recipe_title = scrapy.Field()
-    recipe_cover = scrapy.Field()
-    recipe_views = scrapy.Field()
-    recipe_collection = scrapy.Field()
-    recipe_materials = scrapy.Field()
-    recipe_steps = scrapy.Field()
-    recipe_hasvideo = scrapy.Field()
-    recipe_videosrc = scrapy.Field()
+	# define the fields for your item here like:
+	# name = scrapy.Field()
+	# 菜谱id
+	recipe_id = scrapy.Field()
+	# 菜谱标题
+	recipe_title = scrapy.Field()
+	# 菜谱介绍大图
+	recipe_cover = scrapy.Field()
+	# 菜谱浏览量
+	recipe_views = scrapy.Field()
+	# 菜谱收藏量
+	recipe_collection = scrapy.Field()
+	# 菜谱难度以及材料
+	recipe_materials = scrapy.Field()
+	# 菜谱步骤
+	recipe_steps = scrapy.Field()
+	# 菜谱是否有视频
+	recipe_hasvideo = scrapy.Field()
+	# 菜谱视频url
+	recipe_videosrc = scrapy.Field()
+	# 菜谱分类标签
+	reicpe_mortips = scrapy.Field()
 
+class HCRecipeCalssification(scrapy.Item):
+	
+	# 分类标题
+	classify_title = scrapy.Field()
+	# 分类内容
+	classify_content = scrapy.Field()
+		
+
+
+class HCFoodIngredients(scrapy.Item):
+	
+	# 分类标题
+	ingredients_title = scrapy.Field()
+	# 分类内容
+	ingredients_content = scrapy.Field()
