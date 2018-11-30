@@ -47,3 +47,6 @@ class HCFoodIngredients(scrapy.Item):
 	ingredients_title = scrapy.Field()
 	# 分类内容
 	ingredients_content = scrapy.Field()
+	ingredients_nutritional = scrapy.Field()
+	ingredients_restraint = scrapy.Field()
+	ingredients_collocation = scrapy.Field()

@@ -9,8 +9,8 @@ from HCRecipes.items import HCFoodIngredients
 class FoodIngredients(scrapy.Spider):
 	name = "FoodIngredients"
 	allowed_domains = ['www.douguo.com']
-	bash_url = 'https://www.douguo.com'
-	start_urls = ["https://www.douguo.com/shicai"]
+	base_url = 'https://www.douguo.com'
+	start_urls = ["https://www.douguo.com/shicai/"]
 
 	def parse(self, response):
 		food_ingredients_bs = BeautifulSoup(response.text, 'lxml')
@@ -20,7 +20,7 @@ class FoodIngredients(scrapy.Spider):
 		for caicontl in food_ingredients_caicontl:
 			caicontl_a = caicontl.find('a')
 			caicontl_a_href = caicontl_a['href']
-			caicontl_url = response.url + caicontl_a_href
+			caicontl_url = self.base_url + caicontl_a_href
 			yield Request(caicontl_url, self.ingredientsDetail)
 
 	def ingredientsDetail(self, response):

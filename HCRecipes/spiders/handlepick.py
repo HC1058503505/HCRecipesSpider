@@ -20,7 +20,7 @@ class HandlePick(scrapy.Spider):
 		douguo_bs_pagediv_pagination = douguo_bs_pagediv.find('div', class_='pagination')
 		douguo_bs_pagediv_spans = douguo_bs_pagediv_pagination.find_all('span')
 		spans_text = map(self.spantext, douguo_bs_pagediv_spans)
-		maxPage = int(max(spans_text))
+		maxPage = max(spans_text)
 
 		for i in range(maxPage):
 			url = response.url + str(i * 30)
@@ -40,12 +40,14 @@ class HandlePick(scrapy.Spider):
 				yield Request(cp_box_a_href, RecipesParse().recipesDetail)
 		
 	def spantext(self, span):
-		span_text = span.get_text(strip=True)
-		if span_text in [u'上一页',u'下一页']:
-			span_text = ''
-		elif span_text == u'尾页':
-			span_a = span.a
+		page = 0
+		span_a = span.a
+		if span_a == None:
+			span_text = span.get_text(strip=True)
+			page = int(span_text)
+		else:
 			span_a_href = span_a['href']
 			span_a_href_split = span_a_href.split('/')
-			span_text = str(int(span_a_href_split[-1]) / 30 + 1)
-		return span_text
+			page = int(span_a_href_split[-1]) / 30 + 1
+		
+		return page
