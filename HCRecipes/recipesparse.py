@@ -118,7 +118,7 @@ class RecipesParse(object):
 		else:
 			retew_div_mortips_spans = retew_div_mortips.find_all('span')
 			for span in retew_div_mortips_spans:
-				span_a = span.find(a)
+				span_a = span.find('a')
 				span_a_text = span_a.get_text(strip=True)
 				reicpe_mortips.append(span_a_text)
 
