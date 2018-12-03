@@ -41,10 +41,13 @@ class FoodIngredients(scrapy.Spider):
 					'ingredients_img' : foopi_img_src
 				})
 			
-
-		yield HCFoodIngredients({
-				'ingredients_title' : ingredients_title,
-				'ingredients_content' : ingredients_content
-			})
+			print {
+					'ingredients_sub_title' : foopi_title,
+					'ingredients_img' : foopi_img_src
+				}
+		# yield HCFoodIngredients({
+		# 		'ingredients_title' : ingredients_title,
+		# 		'ingredients_content' : ingredients_content
+		# 	})
 
 

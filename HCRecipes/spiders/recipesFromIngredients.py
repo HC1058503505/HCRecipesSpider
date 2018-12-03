@@ -55,21 +55,20 @@ class RecipesFromIngredients(scrapy.Spider):
 				ingredient_sub_title = ingredient_sub.get('ingredients_sub_title')
 				ingredient_raw = ingredient_sub_title.decode('unicode_escape')
 				url = self.base_url + '/ingredients/' + ingredient_raw
-				print ingredient_title.decode('unicode_escape'), ingredient_raw
 				yield Request(url, self.parse)
 
 	def parse(self, response):
 		douguo_bs = BeautifulSoup(response.text,'lxml')
 		douguo_bs_div_main = douguo_bs.find('div',id='main')
 		douguo_bs_div_bkleft = douguo_bs_div_main.find('div', class_='bkleft')
-		douguo_bs_div_xiangguancaipu = douguo_bs_div_bkleft.find('div', class_='xiangguancaipu')
-		if douguo_bs_xiangguancaipu == None:
+		douguo_bs_div_xiangguancaipu = douguo_bs_div_bkleft.find('div', id='xiangguancaipu')
+		if douguo_bs_div_xiangguancaipu == None:
 			pass
 		else:
-			douguo_bs_pagediv_pagination = douguo_bs_xiangguancaipu.find('div', class_='pagination')
+			douguo_bs_pagediv_pagination = douguo_bs_div_xiangguancaipu.find('div', class_='pagination')
 			douguo_bs_pagediv_spans = douguo_bs_pagediv_pagination.find_all('span')
 			spans_text = map(self.spantext, douguo_bs_pagediv_spans)
-			maxPage = int(max(spans_text))
+			maxPage = max(spans_text)
 			print response.url, maxPage
 			for i in range(maxPage):
 				url = response.url + '/' + str(i * 20)
