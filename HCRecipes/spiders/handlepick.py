@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# ------ 精选 -----------
+# ------ 精选菜谱 -----------
 
 import scrapy
 from bs4 import BeautifulSoup

@@ -21,6 +21,8 @@ class HcrecipesItem(scrapy.Item):
 	recipe_views = scrapy.Field()
 	# 菜谱收藏量
 	recipe_collection = scrapy.Field()
+	# 菜谱简介
+	recipe_desc = scrapy.Field()
 	# 菜谱难度以及材料
 	recipe_materials = scrapy.Field()
 	# 菜谱步骤
@@ -31,7 +33,8 @@ class HcrecipesItem(scrapy.Item):
 	recipe_videosrc = scrapy.Field()
 	# 菜谱分类标签
 	reicpe_mortips = scrapy.Field()
-
+	# 菜谱小贴士
+	recipe_xtieshi = scrapy.Field()
 class HCRecipeCalssification(scrapy.Item):
 	
 	# 分类标题

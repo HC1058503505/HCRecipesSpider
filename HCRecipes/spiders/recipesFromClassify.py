@@ -1,5 +1,7 @@
 # ----- coding:utf-8 --------
 
+# ------- 按类别分类的菜谱 --------
+
 import sys
 import scrapy
 from bs4 import BeautifulSoup
@@ -37,43 +39,29 @@ class RecipesFromClassify(scrapy.Spider):
 				classify_raw = classify_sub.decode('unicode_escape')
 				url = self.base_url + '/caipu/' + classify_raw
 				yield Request(url, self.parse)
-
+				break
 
 	def parse(self, response):
 		douguo_bs = BeautifulSoup(response.text,'lxml')
-		douguo_bs_div_main = douguo_bs.find('div',id='main')
-		douguo_bs_pagediv = douguo_bs_div_main.find('div', class_='pagediv')
-		douguo_bs_pagediv_pagination = douguo_bs_pagediv.find('div', class_='pagination')
-		douguo_bs_pagediv_spans = douguo_bs_pagediv_pagination.find_all('span')
-		spans_text = map(self.spantext, douguo_bs_pagediv_spans)
-		maxPage = int(max(spans_text))
-		print response.url, maxPage
-		for i in range(maxPage):
-			url = response.url + '/' + str(i * 30)
-			print url
-			yield Request(url, self.allPages)
-				
+		douguo_container_cp_box = douguo_bs.find_all('div', class_ = 'cp_box')
 
-	def allPages(self, response):
-		douguo_bs = BeautifulSoup(response.text,'lxml')
-		douguo_bs_div_main = douguo_bs.find('div',id='main')
-		douguo_main_div_container = douguo_bs_div_main.find('div', id='container')
-		douguo_container_cp_box = douguo_main_div_container.find_all('div', class_='cp_box')
 		for cp_box in douguo_container_cp_box:
 			cp_box_a = cp_box.find('a')
 			if cp_box_a['href'] != None:
 				cp_box_a_href = cp_box_a['href']
 				yield Request(cp_box_a_href, RecipesParse().recipesDetail)
 
-	def spantext(self, span):
-		page = 0
-		span_a = span.a
-		if span_a == None:
-			span_text = span.get_text(strip=True)
-			page = int(span_text)
+		next_page = response.css('div.pagination')
+		if next_page == None:
+			pass
 		else:
-			span_a_href = span_a['href']
-			span_a_href_split = span_a_href.split('/')
-			page = int(span_a_href_split[-1]) / 30 + 1
-		
-		return page
+			pagination_spans = next_page.css('span')
+			pagination_spans.reverse()
+			for span in pagination_spans:
+				span_text = span.css('::text').extract_first()
+
+				if span_text == u'下一页':
+					span_a_href = span.css('a::attr(href)').extract_first()
+					next_page_go = response.urljoin(span_a_href)
+					yield Request(next_page_go, self.parse)
+					break

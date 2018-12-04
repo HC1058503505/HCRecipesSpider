@@ -1,6 +1,6 @@
 # ----- coding:utf-8 --------
 
-# ---------- 每日推荐 -----------
+# ---------- 每日推荐菜谱 -----------
 
 import scrapy
 from bs4 import BeautifulSoup

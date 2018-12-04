@@ -48,8 +48,13 @@ class RecipesParse(object):
 		falisc_div = recipe_info.find('div', class_='falisc')
 		falisc_scan = falisc_div.find('span', class_='collectview').text
 		falisc_collection = falisc_div.find('span',class_='collectnum').text
-		# 材料
+
 		retew_div = recipe_info.find('div',class_='retew')
+		# 简介
+		xtip_div = retew_div.find('div', class_='xtip')
+		recipe_desc = xtip_div.get_text(strip=True)
+
+		# 材料
 		retew_div_table = retew_div.find('table',class_='retamr')
 		retew_div_table_trs = retew_div_table.find_all('tr')
 		
@@ -121,6 +126,15 @@ class RecipesParse(object):
 				span_a = span.find('a')
 				span_a_text = span_a.get_text(strip=True)
 				reicpe_mortips.append(span_a_text)
+		# 小贴士
+		xtieshi_div = retew_div.find('div',class_='xtieshi')
+		recipe_xtieshi = ''
+		if xtieshi_div == None:
+			pass
+		else:
+			xtieshi_div_text = xtieshi_div.get_text('|',strip=True)
+			xtieshi_text = xtieshi_div_text.split('|')
+			recipe_xtieshi = xtieshi_text[-1]
 
 		# 菜谱Item
 		recipe_model = HcrecipesItem({
@@ -129,11 +143,13 @@ class RecipesParse(object):
 					'recipe_cover' : div_bokpic_a_img_src,
 					'recipe_views' : falisc_scan,
 					'recipe_collection' : falisc_collection,
+					'recipe_desc' : recipe_desc,
 					'recipe_materials' : zfliao_table,
 					'recipe_steps' : recipes_steps,
 					'recipe_hasvideo' : hasvideo, 
 					'recipe_videosrc' : '',
-					'reicpe_mortips' : reicpe_mortips
+					'reicpe_mortips' : reicpe_mortips,
+					'recipe_xtieshi' : recipe_xtieshi
 				})
 		
 		if hasvideo:

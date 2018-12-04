@@ -1,5 +1,7 @@
 # ----- coding:utf-8 --------
 
+# ----- 按食材分类的菜谱 --------
+
 import sys
 import scrapy
 from bs4 import BeautifulSoup
@@ -56,48 +58,33 @@ class RecipesFromIngredients(scrapy.Spider):
 				ingredient_raw = ingredient_sub_title.decode('unicode_escape')
 				url = self.base_url + '/ingredients/' + ingredient_raw
 				yield Request(url, self.parse)
+				break
 
 	def parse(self, response):
 		douguo_bs = BeautifulSoup(response.text,'lxml')
-		douguo_bs_div_main = douguo_bs.find('div',id='main')
-		douguo_bs_div_bkleft = douguo_bs_div_main.find('div', class_='bkleft')
-		douguo_bs_div_xiangguancaipu = douguo_bs_div_bkleft.find('div', id='xiangguancaipu')
-		if douguo_bs_div_xiangguancaipu == None:
+		douguo_bs_xiangguancaipu = douguo_bs.find('div', id = 'xiangguancaipu')
+		douguo_bs_xiangguancaipu_cp_box = douguo_bs_xiangguancaipu.find_all('div', class_ = ['scig', 'pvl', 'libdm'])
+		for cp_box in douguo_bs_xiangguancaipu_cp_box:
+			cp_box_div = cp_box.find('div', class_ = ['scoic', 'mrl', 'relative'])
+			cp_box_div_a = cp_box_div.find('a')
+			cp_box_div_a_href = cp_box_div_a.get('href')
+			if cp_box_div_a_href == None:
+				pass
+			else:
+				yield Request(cp_box_div_a_href, RecipesParse().recipesDetail)
+
+		next_page = response.css('div.pagination')
+		if next_page == None:
 			pass
 		else:
-			douguo_bs_pagediv_pagination = douguo_bs_div_xiangguancaipu.find('div', class_='pagination')
-			douguo_bs_pagediv_spans = douguo_bs_pagediv_pagination.find_all('span')
-			spans_text = map(self.spantext, douguo_bs_pagediv_spans)
-			maxPage = max(spans_text)
-			print response.url, maxPage
-			for i in range(maxPage):
-				url = response.url + '/' + str(i * 20)
-				print url
-				yield Request(url, self.allPages)
-				
+			pagination_spans = next_page.css('span')
+			pagination_spans.reverse()
+			for span in pagination_spans:
+				span_text = span.css('::text').extract_first()
 
-	def allPages(self, response):
-		douguo_bs = BeautifulSoup(response.text,'lxml')
-		douguo_bs_div_main = douguo_bs.find('div',id='main')
-		douguo_bs_div_bkleft = douguo_bs_div_main.find('div', class_='bkleft')
-		douguo_bs_div_xiangguancaipu = douguo_bs_div_bkleft.find('div', class_='xiangguancaipu')
-		douguo_container_cp_box = douguo_main_div_container.find_all('div', class_=['scig', 'pvl', 'libdm'])
-		for cp_box in douguo_container_cp_box:
-			cp_box_div = cp_box.find('div', class_='hr3')
-			cp_box_a = cp_box_div.find('a')
-			if cp_box_a['href'] != None:
-				cp_box_a_href = cp_box_a['href']
-				yield Request(cp_box_a_href, RecipesParse().recipesDetail)
-
-	def spantext(self, span):
-		page = 0
-		span_a = span.a
-		if span_a == None:
-			span_text = span.get_text(strip=True)
-			page = int(span_text)
-		else:
-			span_a_href = span_a['href']
-			span_a_href_split = span_a_href.split('/')
-			page = int(span_a_href_split[-1]) / 20 + 1
-		
-		return page
+				if span_text == u'下一页':
+					span_a_href = span.css('a::attr(href)').extract_first()
+					next_page_go = response.urljoin(span_a_href)
+					print next_page_go
+					yield Request(next_page_go, self.parse)
+					break

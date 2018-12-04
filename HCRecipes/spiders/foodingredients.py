@@ -1,10 +1,15 @@
 # -*- coding: utf-8 -*-
 
-
+# ------- 菜谱的食材分类列表 --------
+import sys
+import requests
 import scrapy
 from bs4 import BeautifulSoup
 from scrapy.http import Request
 from HCRecipes.items import HCFoodIngredients
+
+reload(sys)
+sys.setdefaultencoding('utf8')
 
 class FoodIngredients(scrapy.Spider):
 	name = "FoodIngredients"
@@ -41,10 +46,59 @@ class FoodIngredients(scrapy.Spider):
 					'ingredients_img' : foopi_img_src
 				})
 			
-			print {
-					'ingredients_sub_title' : foopi_title,
-					'ingredients_img' : foopi_img_src
-				}
+
+			effect_url = self.base_url + '/ingredients/' + foopi_title + '/effect'
+			xiangke_url = self.base_url + '/xiangke/' + foopi_title
+			dapei_url = self.base_url + '/dapei/' + foopi_title
+			
+			effect_response = requests.get(effect_url)
+			effect_response.encoding = 'utf-8'
+			effect_bs = BeautifulSoup(effect_response.text, 'lxml')
+			effect_bs_bkmcot = effect_bs.find_all('div', class_ = 'bkmcot')
+			for bkmcot in effect_bs_bkmcot:
+				bkmcot_h3 = bkmcot.find('h3', class_ = 'pbm')
+				bkmcot_h3_id = bkmcot_h3.get('id')
+				if bkmcot_h3_id == None:
+					pass
+				else:
+					jieshao = ''
+					chengfen = []
+					if bkmcot_h3_id != 'chengfen':
+						bkmcot_ps = bkmcot.find_all('p')
+						for p in bkmcot_ps:
+							p_text = p.get_text(strip=True)
+							if len(p_text) == 0:
+								continue
+							jieshao = jieshao + p_text + '\n'
+						jieshao.rstrip()
+						print jieshao, bkmcot_h3_id
+					elif bkmcot_h3_id == 'chengfen':
+						bkmcot_table = bkmcot.find('table', class_='inrtab')
+						bkmcot_table_trs = bkmcot_table.find_all('tr')
+						for tr in bkmcot_table_trs:
+							tr_text = tr.get_text('|',strip = True)
+							tr_text_split = tr_text.split('|')
+							if len(tr_text_split) == 4:
+								chengfen_temp = [
+										{
+											'item_title' : tr_text_split[0],
+											'item_value' : tr_text_split[1]
+										},
+										{
+											'item_title' : tr_text_split[2],
+											'item_value' : tr_text_split[3]
+										}
+									]
+
+								chengfen = chengfen + chengfen_temp
+							elif len(tr_text_split) == 2:
+								chengfen.append({
+										'item_title' : tr_text_split[0],
+										'item_value' : tr_text_split[1]
+									})
+							else:
+								pass
+
 		# yield HCFoodIngredients({
 		# 		'ingredients_title' : ingredients_title,
 		# 		'ingredients_content' : ingredients_content
