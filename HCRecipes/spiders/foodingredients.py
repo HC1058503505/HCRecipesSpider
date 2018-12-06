@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # ------- 菜谱的食材分类列表 --------
+import re
 import sys
 import requests
 import scrapy
@@ -44,15 +45,15 @@ class FoodIngredients(scrapy.Spider):
 
 			# 营养成分
 			effect_url = self.base_url + '/ingredients/' + foopi_title + '/effect'
-			effect_components = self.shicaiComponents(effect_url)
+			effect_components = self.shicaiEffectComponents(effect_url)
 
 			# 食物相克
 			xiangke_url = self.base_url + '/xiangke/' + foopi_title
-			xiangke_components = self.shicaiComponents(xiangke_url)
+			xiangke_components = self.shicaiXiangkeDapeiComponents(xiangke_url)
 			
 			# 食材搭配
 			dapei_url = self.base_url + '/dapei/' + foopi_title
-			dapei_componets = self.shicaiComponents(dapei_url)
+			dapei_componets = self.shicaiXiangkeDapeiComponents(dapei_url)
 
 
 			yield HCFoodIngredients({
@@ -64,7 +65,7 @@ class FoodIngredients(scrapy.Spider):
 					'ingredients_dapei' : dapei_componets
 				})
 
-	def shicaiComponents(self, effect_url):
+	def shicaiEffectComponents(self, effect_url):
 		effect_response = requests.get(effect_url)
 		effect_response.encoding = 'utf-8'
 		effect_bs = BeautifulSoup(effect_response.text.replace('<br />','\n'), 'lxml')
@@ -130,3 +131,27 @@ class FoodIngredients(scrapy.Spider):
 			effect_components.append(effectcomponent)
 
 		return effect_components
+
+
+	def shicaiXiangkeDapeiComponents(self, xiangke_dapei_url):
+		xiangke_dapei_response = requests.get(xiangke_dapei_url)
+		xiangke_dapei_response.encoding = 'utf-8'
+		xiangke_dapei_bs = BeautifulSoup(xiangke_dapei_response.text, 'lxml')
+		xiangke_dapei_shicnr = xiangke_dapei_bs.find('div', class_='shicnr')
+		xiangke_dapei_shicnr_h1 = xiangke_dapei_shicnr.find('h1', class_ = 'shez')
+		xiangke_dapei_shicnr_desc_title = xiangke_dapei_shicnr_h1.get_text(strip = True)
+		xiangke_dapei_shicnr_p = xiangke_dapei_shicnr.find('p', class_ = 'cdnr')
+		xiangke_dapei_shicnr_desc = xiangke_dapei_shicnr_p.get_text(strip = True)
+
+
+		xiangke_dapei_scsj_rs = xiangke_dapei_bs.find_all('div', class_ = 'scsj_r')
+		xiangke_dapei_components = []
+		for scsj_r in xiangke_dapei_scsj_rs:
+			scsj_r_content = scsj_r.get_text(strip = True)
+			scsj_r_content = scsj_r_content.replace('查看菜谱>>','')
+			xiangke_dapei_components.append(scsj_r_content)
+		return {
+			"xiangke_dapei_title" : xiangke_dapei_shicnr_desc_title,
+			"xiangke_dapei_desc" : xiangke_dapei_shicnr_desc,
+			"xiangke_dapei_details" : xiangke_dapei_components
+		}

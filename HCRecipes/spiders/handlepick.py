@@ -6,6 +6,7 @@ import scrapy
 from bs4 import BeautifulSoup
 from scrapy.http import Request
 from HCRecipes.recipesparse import RecipesParse
+from HCRecipes.items import HcrecipesItem
 
 class HandlePick(scrapy.Spider):
 	
@@ -19,7 +20,8 @@ class HandlePick(scrapy.Spider):
 		douguo_cp_boxs = douguo_container.css('div.cp_box')
 		for cp_box in douguo_cp_boxs:
 			cp_box_href = cp_box.css('a::attr(href)').extract_first()
-			yield Request(cp_box_href, RecipesParse().recipesDetail)
+			recipe = recipeparse.recipesDetail(cp_box_href)
+			yield HcrecipesItem(recipe)
 
 
 		next_page = response.css('div.pagination')

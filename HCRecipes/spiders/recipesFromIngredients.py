@@ -7,6 +7,7 @@ import scrapy
 from bs4 import BeautifulSoup
 from scrapy.http import Request
 from HCRecipes.recipesparse import RecipesParse
+from HCRecipes.items import HcrecipesItem
 
 reload(sys)
 sys.setdefaultencoding('utf8')
@@ -58,12 +59,13 @@ class RecipesFromIngredients(scrapy.Spider):
 				ingredient_raw = ingredient_sub_title.decode('unicode_escape')
 				url = self.base_url + '/ingredients/' + ingredient_raw
 				yield Request(url, self.parse)
-				break
+
 
 	def parse(self, response):
 		douguo_bs = BeautifulSoup(response.text,'lxml')
 		douguo_bs_xiangguancaipu = douguo_bs.find('div', id = 'xiangguancaipu')
 		douguo_bs_xiangguancaipu_cp_box = douguo_bs_xiangguancaipu.find_all('div', class_ = ['scig', 'pvl', 'libdm'])
+		recipeparse = RecipesParse()
 		for cp_box in douguo_bs_xiangguancaipu_cp_box:
 			cp_box_div = cp_box.find('div', class_ = ['scoic', 'mrl', 'relative'])
 			cp_box_div_a = cp_box_div.find('a')
@@ -71,7 +73,8 @@ class RecipesFromIngredients(scrapy.Spider):
 			if cp_box_div_a_href == None:
 				pass
 			else:
-				yield Request(cp_box_div_a_href, RecipesParse().recipesDetail)
+				recipe = recipeparse.recipesDetail(cp_box_div_a_href)
+				yield HcrecipesItem(recipe)
 
 		next_page = response.css('div.pagination')
 		if next_page == None:
@@ -85,6 +88,5 @@ class RecipesFromIngredients(scrapy.Spider):
 				if span_text == u'下一页':
 					span_a_href = span.css('a::attr(href)').extract_first()
 					next_page_go = response.urljoin(span_a_href)
-					print next_page_go
 					yield Request(next_page_go, self.parse)
 					break

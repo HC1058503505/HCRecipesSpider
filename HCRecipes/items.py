@@ -54,3 +54,14 @@ class HCFoodIngredients(scrapy.Item):
 	ingredients_effect = scrapy.Field()
 	ingredients_xiangke = scrapy.Field()
 	ingredients_dapei = scrapy.Field()
+
+
+class HCMenuRecipes(scrapy.Item):
+	menu_id = scrapy.Field()
+	menu_title = scrapy.Field()
+	menu_scan_num = scrapy.Field()
+	menu_collection_num = scrapy.Field()
+	menu_desc = scrapy.Field()
+	menu_sections = scrapy.Field()
+
+		

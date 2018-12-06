@@ -10,7 +10,10 @@ from HCRecipes.items import HcrecipesItem
 
 class RecipesParse(object):
 
-	def recipesDetail(self, response):
+	def recipeBrief(self,url):
+		response = requests.get(url)
+		response.encoding = 'utf-8'
+
 		# recipe id
 		pattern = re.compile(r'https://www.douguo.com/cookbook/(.*?).html',)
 		recipe_id = re.match(pattern,response.url).group(1)
@@ -49,10 +52,78 @@ class RecipesParse(object):
 		falisc_scan = falisc_div.find('span', class_='collectview').text
 		falisc_collection = falisc_div.find('span',class_='collectnum').text
 
+		return {
+			"recipe_id" : recipe_id,
+			"recipe_title" : recipe_title,
+			'recipe_cover' : div_bokpic_a_img_src,
+			'recipe_views' : falisc_scan,
+			'recipe_collection' : falisc_collection,
+			"recipe_hasvideo" : hasvideo
+		}
+		
+	def recipesDetail(self,url):
+		response = requests.get(url)
+		response.encoding = 'utf-8'
+		# recipe id
+		pattern = re.compile(r'https://www.douguo.com/cookbook/(.*?).html')
+		recipe_id = re.match(pattern,url).group(1)
+
+		# recipe detail
+		recipesDetail_bs = BeautifulSoup(response.text,'lxml')
+		recipe_info = recipesDetail_bs.find('div', class_='recinfo')
+		div_bokpic = recipe_info.find('div', class_='bokpic')
+		div_bokpic_as = div_bokpic.find_all('a')
+
+		hasvideo = False
+		# 图片
+		div_bokpic_a_img_src = ''
+		div_video_a_href = ''
+		if len(div_bokpic_as) == 0:
+			pass
+		elif len(div_bokpic_as) == 1:
+			div_bokpic_a = div_bokpic_as[0]
+			div_bokpic_a_img = div_bokpic_a.find('img')
+			div_bokpic_a_img_src = div_bokpic_a_img['src']
+		elif len(div_bokpic_as) == 2:
+			div_bokpic_a = div_bokpic_as[0]
+			div_bokpic_a_img = div_bokpic_a.find('img')
+			div_bokpic_a_img_src = div_bokpic_a_img['src']
+
+			hasvideo = True
+			div_video_a = div_bokpic_as[1]
+			div_video_a_href = div_video_a['href']
+			
+		
+		# 标题
+		h1 = recipe_info.find('h1',id='page_cm_id')
+		recipe_title = h1.text.strip()
+		# 浏览搜藏
+		falisc_div = recipe_info.find('div', class_='falisc')
+		falisc_scan = falisc_div.find('span', class_='collectview').text
+		falisc_collection = falisc_div.find('span',class_='collectnum').text
+
+		# 菜单简介
+		isBrief = bool(getattr(self, 'isBrief', False))
+		if isBrief:
+			return {
+				"recipe_id" : recipe_id,
+				"recipe_title" : recipe_title,
+				'recipe_cover' : div_bokpic_a_img_src,
+				'recipe_views' : falisc_scan,
+				'recipe_collection' : falisc_collection,
+				"recipe_hasvideo" : hasvideo
+			}
+		else:
+			pass
+	
 		retew_div = recipe_info.find('div',class_='retew')
 		# 简介
 		xtip_div = retew_div.find('div', class_='xtip')
-		recipe_desc = xtip_div.get_text(strip=True)
+		recipe_desc = ''
+		if xtip_div == None:
+			pass
+		else:
+			recipe_desc = xtip_div.get_text(strip=True)
 
 		# 材料
 		retew_div_table = retew_div.find('table',class_='retamr')
@@ -137,7 +208,7 @@ class RecipesParse(object):
 			recipe_xtieshi = xtieshi_text[-1]
 
 		# 菜谱Item
-		recipe_model = HcrecipesItem({
+		recipe_model = {
 					'recipe_id' : recipe_id,
 					'recipe_title' : recipe_title,
 					'recipe_cover' : div_bokpic_a_img_src,
@@ -150,12 +221,20 @@ class RecipesParse(object):
 					'recipe_videosrc' : '',
 					'reicpe_mortips' : reicpe_mortips,
 					'recipe_xtieshi' : recipe_xtieshi
-				})
+				}
 		
 		if hasvideo:
-			yield Request(div_video_a_href, self.parseVideo, meta=recipe_model)
+			video_response = requests.get(div_video_a_href)
+			video_response.encoding = 'utf-8'
+			video_html_bs = BeautifulSoup(response.text, 'lxml')
+			video_html_bs_embed = video_html_bs.find('embed')
+			video_src = video_html_bs_embed['src']
+			recipe_model['recipe_videosrc'] = video_src
 		else:
-			yield recipe_model
+			pass
+			
+		return recipe_model
+
 
 	def parseVideo(self, response):
 		video_html_bs = BeautifulSoup(response.text, 'lxml')
@@ -163,7 +242,7 @@ class RecipesParse(object):
 		video_src = video_html_bs_embed['src']
 		recipesItem = response.meta
 		recipesItem['recipe_videosrc'] = video_src
-		yield recipesItem
+		return recipesItem
 
 	def sliceMtims(self,tbody_bs_tr):
 		mtim = ()

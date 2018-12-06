@@ -7,6 +7,7 @@ import scrapy
 from bs4 import BeautifulSoup
 from scrapy.http import Request
 from HCRecipes.recipesparse import RecipesParse
+from HCRecipes.items import HcrecipesItem
 
 reload(sys)
 sys.setdefaultencoding('utf8')
@@ -44,12 +45,13 @@ class RecipesFromClassify(scrapy.Spider):
 	def parse(self, response):
 		douguo_bs = BeautifulSoup(response.text,'lxml')
 		douguo_container_cp_box = douguo_bs.find_all('div', class_ = 'cp_box')
-
+		recipeparse = RecipesParse()
 		for cp_box in douguo_container_cp_box:
 			cp_box_a = cp_box.find('a')
 			if cp_box_a['href'] != None:
 				cp_box_a_href = cp_box_a['href']
-				yield Request(cp_box_a_href, RecipesParse().recipesDetail)
+				recipe = recipeparse.recipesDetail(cp_box_a_href)
+				yield HcrecipesItem(recipe)
 
 		next_page = response.css('div.pagination')
 		if next_page == None:
